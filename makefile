@@ -2,7 +2,7 @@
 # Amaze MakeFile
 ##
 
-CC        := clang
+CC        := $(if $(filter Darwin,$(shell uname -s)),clang,gcc)
 FLAGS     := -std=c99 -Wall
 ODIR      := ./build
 OUTDIR    := ./out
