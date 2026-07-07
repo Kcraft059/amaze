@@ -20,23 +20,19 @@ const struct programArgument args[] = {
 };
 
 int main(int argc, char** argv) {
-  error_code err;
+  err result = OK;
 
-  err = evalArgsContext(argv, args);
-  if (err != OK) return err;
+  evalArgsContext(argv, argc, args);
 
   int client_socket_fd = socket(AF_INET, SOCK_STREAM, 0); // Create new socket
   struct sockaddr_in server_addr = {
       .sin_family = AF_INET,
       .sin_port = htons(ACP_DEFAULT_PORT),
-      .sin_addr.s_addr = htonl(0x7f000001), // Loopback 127.0.0.0
+      .sin_addr.s_addr = htonl(INADDR_LOOPBACK),
   };
-  err = connect(client_socket_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+  result = connect(client_socket_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
-  if (err != 0) {
-    perror("Connecting to server");
-    exit(errno);
-  }
+  if (result != 0) panicErrorf(errno, "Connecting to server");
 
   char buf[32];
   recv(client_socket_fd, buf, 32, 0);

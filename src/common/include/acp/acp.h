@@ -9,6 +9,6 @@
 
 #include <acp/protocol.h>
 
-#define ACP_DEFAULT_PORT 1451
+#define ACP_DEFAULT_PORT 4901
 
 #endif // _ACP_H

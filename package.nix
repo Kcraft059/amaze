@@ -4,14 +4,14 @@ let
     { name, target }:
     pkgs.stdenv.mkDerivation {
       pname = name;
-      version = "0.1-alpha";
+      version = "0.1-dev";
 
       src = ./.;
 
       buildInputs = with pkgs; [
         ncurses
       ];
-      nativeBuildInputs = with pkgs; (if pkgs.stdenv.isLinux then [ gcc ] else [ ]);
+      nativeBuildInputs = with pkgs; [ gnumake ] ++ (if pkgs.stdenv.isLinux then [ gcc ] else [ clang ]);
 
       buildPhase = ''
         make ${target}

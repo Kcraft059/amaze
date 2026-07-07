@@ -7,7 +7,7 @@
 #ifndef _MISC_H
 #define _MISC_H
 
-#include <misc/error.h>
+#include <misc/log.h>
 
 /// Argument Parser
 
@@ -19,7 +19,7 @@
  *
  * @return Error code
  */
-typedef error_code (*argumentFunc)(char** argv, int* argc);
+typedef err (*argumentFunc)(char** argv, int* argc);
 
 /**
  * Program argument struct
@@ -38,6 +38,6 @@ struct programArgument {
  *
  * @return Error code
  */
-error_code evalArgsContext(char** argv, const struct programArgument* args);
+void evalArgsContext(char** argv, int argc, const struct programArgument* args);
 
 #endif // _MISC_H
