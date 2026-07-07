@@ -4,8 +4,8 @@
  * Copyright (C) 2026 @kcraft059 - GPL v3
  *-----------------------------------------------------------------------**/
 
-#ifndef _ERROR_H
-#define _ERROR_H
+#ifndef _MISC_ERROR_H
+#define _MISC_ERROR_H
 
 /**
  * Error codes
@@ -31,4 +31,4 @@ extern const char* error_messages[_ERR_COUNT];
  */
 const char* errorCodeToStr(error_code code);
 
-#endif // _ERROR_H
+#endif // _MISC_ERROR_H

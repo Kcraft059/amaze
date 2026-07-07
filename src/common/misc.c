@@ -4,15 +4,15 @@
  * Copyright (C) 2026 @kcraft059 - GPL v3
  *-----------------------------------------------------------------------**/
 
-#include <error.h>
-#include <misc.h>
+#include <misc/error.h>
+#include <misc/misc.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
-error_code evalArgsContext(char** argv, const programArgument* args) {
+error_code evalArgsContext(char** argv, const struct programArgument* args) {
   for (int arg_idx = 1; argv[arg_idx] != NULL; arg_idx++) { // Start at i = 1 because we don't care about path
-    const programArgument* match_arg;
+    const struct programArgument* match_arg;
     char* name_arg = argv[arg_idx];
     bool match = false;
 

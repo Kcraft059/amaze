@@ -4,7 +4,7 @@
  * Copyright (C) 2026 @kcraft059 - GPL v3
  *-----------------------------------------------------------------------**/
 
-#include <error.h>
+#include <misc/error.h>
 
 const char* error_messages[_ERR_COUNT] = {
     [OK] = "Operation suceeded.",
