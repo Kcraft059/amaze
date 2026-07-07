@@ -28,7 +28,7 @@ let
       };
     };
 in
-{
+rec {
   amaze = buildTarget {
     name = "amaze";
     target = "client";
@@ -37,4 +37,5 @@ in
     name = "amaze-server";
     target = "server";
   };
+  default = amaze;
 }
