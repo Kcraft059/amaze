@@ -15,11 +15,11 @@
  * Executes code given following args
  *
  * @param argv Args following the given argument
- * @param argc Pointer to int var in which the function will store how much args it "consummed"
+ * @param argc Number of args
  *
- * @return Error code
+ * @return Number of args used
  */
-typedef err (*argumentFunc)(char** argv, int* argc);
+typedef int (*argumentFunc)(char** argv, int argc);
 
 /**
  * Program argument struct

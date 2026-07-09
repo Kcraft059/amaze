@@ -6,7 +6,6 @@
 
 #include <misc/misc.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/errno.h>
 
@@ -27,11 +26,10 @@ void evalArgsContext(char** argv, int argc, const struct programArgument* args) 
 
     if (!match) panicErrorf(EINVAL, "Evaluating arg \"%s\"", name_arg); // Return error if no match
 
-    int offset = argc - arg_idx - 1;
-    err result;
+    int offset;
 
-    result = match_arg->func(argv + arg_idx + 1, &offset);                 // Execute associated function and pass all args after arg_name
-    if (result != OK) panicErrorf(result, "Parsing arg \"%s\"", name_arg); // Return if error
+    offset = match_arg->func(argv + arg_idx + 1, argc - arg_idx - 1);     // Execute associated function and pass all args after arg_name
+    if (offset == -1) panicErrorf(errno, "Parsing arg \"%s\"", name_arg); // Return if error
 
     arg_idx += offset;
   }

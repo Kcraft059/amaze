@@ -6,8 +6,8 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/fcntl.h>
-#include <time.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #ifdef __linux__
 #include <sys/epoll.h>
@@ -21,6 +21,12 @@
 #include <acp/acp.h>
 #include <misc/log.h>
 #include <server/core.h>
+
+// Local function declarations
+
+int addReadSockQueue(int queue_fd, struct sock_context* sock_ctx);
+
+// Global function definition
 
 int initServerSocket(int port) {
   int server_sock, socket_flags, result;
@@ -44,7 +50,7 @@ int initServerSocket(int port) {
   result = fcntl(server_sock, F_SETFL, socket_flags);
 
   if (socket_flags == -1)
-    panicErrorf(errno, "Getting server socket flags");
+    panicErrorf(errno, "Setting server socket flags");
 
   result = bind(server_sock, (struct sockaddr*)&sock_addr, sizeof(sock_addr)); // Bind port to adress
 
@@ -73,22 +79,56 @@ int initQueue() {
   return queue_fd;
 }
 
-void addServerSockQueue(int queue_fd, int server_sock_fd) {
+struct sock_context* addSockToQueue(int queue_fd, int sock_fd, enum sock_type type) { // Needs to live in memory, should be allocated
+  struct sock_context* sock_ctx = malloc(sizeof(struct sock_context));
+  sock_ctx->type = type;
+  sock_ctx->fd = sock_fd;
+
+  switch (sock_ctx->type) {
+  case T_SERVER_SOCK:
+  case T_CLIENT_SOCK:
+    return addReadSockQueue(queue_fd, sock_ctx) != -1 ? sock_ctx : NULL;
+  }
+};
+
+int closeSockCtx(struct sock_context* sock_ctx) {
+  if (close(sock_ctx->fd) == -1) return -1;
+  free(sock_ctx);
+  return 0;
+};
+
+int handleSockEvents(int queue_fd, event_handler handler, int max_events, struct timespec* timeout) {
 #ifdef __linux__
 #error "Not implemented yet"
 #elif defined(__APPLE__)
-  struct kevent changes[1] = {{
-      .flags = EV_ADD,
-      .ident = server_sock_fd,
-      .filter = EVFILT_READ, /* Sockets	which  have  previously	been passed to
-                               listen(2) return	when there is an incoming con-
-                               nection pending.	 data contains the size	of the
-                               listen backlog. */
-  }};
+  struct kevent events[max_events];
+  int n = kevent(queue_fd, NULL, 0, events, max_events, timeout); // Fetch max number of events
 
-  int result = kevent(queue_fd, changes, 1, NULL, 0, NULL); // Add server_sock to the queue
-  if (result == -1)
-    panicErrorf(errno, "Adding server socket to queue");
-  printLogf("Added to queue_fd");
+  if (n == -1) // If error during poll
+    return -1;
+
+  for (n = n - 1; n >= 0; --n)
+    handler(events[n].udata, events[n].flags & EV_EOF ? SEV_RESET : SEV_READ);
+
+#endif
+  return 0;
+};
+
+// Local function definiton
+
+int addReadSockQueue(int queue_fd, struct sock_context* sock_ctx) {
+#ifdef __linux__
+#error "Not implemented yet"
+#elif defined(__APPLE__)
+  // Add server_sock to the queue
+  int result = kevent(queue_fd, &(struct kevent){
+                                    .flags = EV_ADD, // Will contain EV_EOF on sock close
+                                    .ident = sock_ctx->fd,
+                                    .filter = EVFILT_READ,
+                                    .udata = sock_ctx,
+                                },
+                      1, NULL, 0, NULL);
+
+  return result != -1 ? 0 : -1;
 #endif
 }

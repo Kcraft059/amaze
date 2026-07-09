@@ -35,7 +35,7 @@ FILE* log_file = NULL;
 
 void printLogf(char* restrict msg_fmt, ...) {
   va_list args;
-  char buf[64];
+  char buf[256];
 
   va_start(args, msg_fmt);
   vsnprintf(buf, sizeof(buf), msg_fmt, args); // Pass variatic arg down to snprintf
@@ -46,7 +46,7 @@ void printLogf(char* restrict msg_fmt, ...) {
 
 void printErrorf(err code, char* restrict err_fmt, ...) {
   va_list args;
-  char buf[64];
+  char buf[256];
 
   va_start(args, err_fmt);
   vsnprintf(buf, sizeof(buf), err_fmt, args); // Pass variatic arg down to snprintf
@@ -57,7 +57,7 @@ void printErrorf(err code, char* restrict err_fmt, ...) {
 
 void panicErrorf(err code, char* restrict err_fmt, ...) {
   va_list args;
-  char buf[64];
+  char buf[256];
 
   va_start(args, err_fmt);
   vsnprintf(buf, sizeof(buf), err_fmt, args); // Pass variatic arg down to snprintf
@@ -85,7 +85,7 @@ void printLog(char* log_str) {
 }
 
 void printErr(err code, char* err_str) {
-  char buf[64];
+  char buf[256];
   snprintf(buf, sizeof(buf), "%s: %s", err_str, errorCodeToStr(code)); // Translate code to human readable error
   printToFile(error_file == NULL ? stderr : error_file, "Error", buf); // Print in configured file
 }

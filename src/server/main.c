@@ -5,10 +5,7 @@
  *-----------------------------------------------------------------------**/
 
 #include "misc/log.h"
-#include <_stdio.h>
-#include <_time.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -29,7 +26,8 @@
 
 // Local declarations
 
-err argSetPort(char** argv, int* argc);
+int argSetPort(char** argv, int argc);
+void sockHandler(struct sock_context* sock_ctx, enum sock_event event);
 
 uint16_t port = ACP_DEFAULT_PORT;
 const struct programArgument args[] = {
@@ -43,49 +41,51 @@ int main(int argc, char** argv) {
   evalArgsContext(argv, argc, args);
 
   int server_sock_fd, queue_fd;
-  server_sock_fd = initServerSocket(port);
+  struct sock_context* server_sock_ctx;
+
   queue_fd = initQueue();
-  addServerSockQueue(queue_fd, server_sock_fd);
+  server_sock_fd = initServerSocket(port);
+  server_sock_ctx = addSockToQueue(queue_fd, server_sock_fd, T_SERVER_SOCK);
+  if (server_sock_ctx == NULL)
+    panicErrorf(errno, "Adding server sock to queue");
 
-	printLogf("Starting to wait");
-  nanosleep(&(struct timespec){30, 0}, NULL);
-	printLogf("Accepting clients");
+  handleSockEvents(queue_fd, sockHandler, 40, &(struct timespec){30, 0});
 
-#ifdef __linux__
-#error "Not implemented yet"
-#elif defined(__APPLE__)
-  struct kevent events[10];
-
-  int n = kevent(queue_fd, NULL, 0, events, 10, &(struct timespec){30, 0});
-
-  printLogf("Number of events returned: %d", n);
-
-  for (n = n - 1; n >= 0; n--) {
-    int client_sock_fd;
-
-    while ((client_sock_fd = accept(events[n].ident, NULL, NULL)) != -1) {
-      send(client_sock_fd, "Gloup !", 8, 0);
-      close(client_sock_fd);
-    };
-
-    if (errno != EWOULDBLOCK && errno != EAGAIN)
-      panicErrorf(errno, "Accept error");
-  }
-#endif
+  closeSockCtx(server_sock_ctx);
+  close(queue_fd);
 
   return 0;
 }
 
 // Local functions
 
-err argSetPort(char** argv, int* argc) {
+void sockHandler(struct sock_context* sock_ctx, enum sock_event event) { // WIP
+  if (sock_ctx->type != T_SERVER_SOCK)
+    return;
+
+  int client_sock_fd;
+  while ((client_sock_fd = accept(sock_ctx->fd, NULL, NULL)) != -1) {
+    send(client_sock_fd, "Hello !", 8, 0);
+    close(client_sock_fd);
+  }
+
+  if (errno != EWOULDBLOCK && errno != EAGAIN)
+    printErrorf(errno, "Accepting incomming connection");
+};
+
+int argSetPort(char** argv, int argc) {
   int val, n, pos;
-  if (*argc < 1) return EINVLPRM; // Check if there's enough params
+  if (argc < 1) {
+    errno = EINVLPRM; // Check if there's enough params
+    return -1;
+  }
 
   n = sscanf(argv[0], "%d%n", &val, &pos);
-  if (n != 1 || pos != strlen(argv[0])) return EINVLPRM; // Fail if invalid input
-  port = val & 0xffff;                                   // Update port with mask
+  if (n != 1 || pos != strlen(argv[0])) {
+    errno = EINVLPRM; // Fail if invalid input
+    return -1;
+  }
+  port = val & 0xffff; // Update port with mask
 
-  *argc = 1; // Set number of params used
-  return OK;
+  return 1; // Return number of params used
 };
